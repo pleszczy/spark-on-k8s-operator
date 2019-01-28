@@ -14,4 +14,11 @@ The JMX exporter exposes a HTTP server serving the metrics on the specified port
 "prometheus.io/path": "/metrics"
 ```
 
-A complete example `SparkApplication` specification with metric exporting to Prometheus enabled can be found [here](../examples/spark-pi-prometheus.yaml).   
+A complete example `SparkApplication` specification with metric exporting to Prometheus enabled can be found [here](../examples/spark-pi-prometheus.yaml).
+
+### How to build
+```bash
+$ docker build -t quay.io/synersie/spark-operator:latest  .
+$ docker login quay.io
+$  docker push quay.io/synersie/spark-operator:latest
+```
