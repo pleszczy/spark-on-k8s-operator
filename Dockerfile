@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-ARG SPARK_IMAGE=gcr.io/spark-operator/spark:v2.4.0
+ARG SPARK_IMAGE=quay.io/synerise/spark:2.4.0-custom
 
 FROM golang:1.11.4-alpine as builder
 ARG DEP_VERSION="0.5.0"

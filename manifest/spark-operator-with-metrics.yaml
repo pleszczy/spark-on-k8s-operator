@@ -45,7 +45,7 @@ spec:
       serviceAccountName: sparkoperator
       containers:
       - name: sparkoperator
-        image: gcr.io/spark-operator/spark-operator:v2.4.0-v1beta1-latest
+        image: quay.io/synerise/spark-operator:2.4.0-prometheus
         imagePullPolicy: Always
         ports:
           - containerPort: 10254

@@ -20,7 +20,7 @@
 # 1. Your Docker version is >= 18.09
 # 2. export DOCKER_BUILDKIT=1
 
-ARG SPARK_IMAGE=gcr.io/spark-operator/spark:v2.4.0
+ARG SPARK_IMAGE=quay.io/synerise/spark-operator:2.4.0-custom
 ARG USER_ID=185
 
 FROM golang:1.11.4-alpine as builder
