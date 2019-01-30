@@ -64,7 +64,7 @@ var (
 	webhookPort         = flag.Int("webhook-port", 8080, "Service port of the webhook server.")
 	enableMetrics       = flag.Bool("enable-metrics", false, "Whether to enable the metrics endpoint.")
 	metricsPort         = flag.String("metrics-port", "10254", "Port for the metrics endpoint.")
-	metricsEndpoint     = flag.String("metrics-endpoint", "/metrics", "Metrics endpoint.")
+	metricsEndpoint     = flag.String("metrics-endpoint", "/prometheus", "Metrics endpoint.")
 	metricsPrefix       = flag.String("metrics-prefix", "", "Prefix for the metrics.")
 	ingressUrlFormat    = flag.String("ingress-url-format", "", "Ingress URL format.")
 )
