@@ -89,7 +89,7 @@ func configPrometheusMonitoring(app *v1beta1.SparkApplication, kubeClient client
 		}
 		app.Spec.Driver.Annotations[prometheusScrapeAnnotation] = "true"
 		app.Spec.Driver.Annotations[prometheusPortAnnotation] = fmt.Sprintf("%d", port)
-		app.Spec.Driver.Annotations[prometheusPathAnnotation] = "/metrics"
+		app.Spec.Driver.Annotations[prometheusPathAnnotation] = "/prometheus"
 
 		if app.Spec.Driver.JavaOptions == nil {
 			app.Spec.Driver.JavaOptions = &javaOption
@@ -108,7 +108,7 @@ func configPrometheusMonitoring(app *v1beta1.SparkApplication, kubeClient client
 		}
 		app.Spec.Executor.Annotations[prometheusScrapeAnnotation] = "true"
 		app.Spec.Executor.Annotations[prometheusPortAnnotation] = fmt.Sprintf("%d", port)
-		app.Spec.Executor.Annotations[prometheusPathAnnotation] = "/metrics"
+		app.Spec.Executor.Annotations[prometheusPathAnnotation] = "/prometheus"
 
 		if app.Spec.Executor.JavaOptions == nil {
 			app.Spec.Executor.JavaOptions = &javaOption

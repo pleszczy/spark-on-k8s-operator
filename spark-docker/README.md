@@ -18,15 +18,15 @@ A complete example `SparkApplication` specification with metric exporting to Pro
 
 ### How to build spark image
 ```bash
-$ docker build -t quay.io/synerise/spark:2.4.0-rpometheus  .
+$ docker build -t quay.io/synerise/spark:2.4.0-custom  .
 $ docker login quay.io
-$ docker push quay.io/synerise/spark:2.4.0-rpometheus
+$ docker push quay.io/synerise/spark:2.4.0-custom
 ```
 
 ### How to build spark-operator image based on our spark with prometheus image
 ```bash
 $ cd ../
-$ docker build -t quay.io/synerise/spark-operator:2.4.0-prometheus .
+$ docker build -t quay.io/synerise/spark-operator:2.4.0-custom .
 $ docker login quay.io
-$ docker push quay.io/synerise/spark-operator:2.4.0-prometheus
+$ docker push quay.io/synerise/spark-operator:2.4.0-custom
 ```
