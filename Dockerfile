@@ -16,8 +16,8 @@
 
 ARG SPARK_IMAGE=quay.io/synerise/spark:2.4.0-custom
 
-FROM golang:1.11.5-alpine as builder
-ARG DEP_VERSION="0.5.0"
+FROM golang:1.12.0-alpine as builder
+ARG DEP_VERSION="0.5.1"
 RUN apk add --no-cache bash git
 ADD https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 /usr/bin/dep
 RUN chmod +x /usr/bin/dep

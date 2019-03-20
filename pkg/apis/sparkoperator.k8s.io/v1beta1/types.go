@@ -374,6 +374,9 @@ type SparkPodSpec struct {
 	// Tolerations specifies the tolerations listed in ".spec.tolerations" to be applied to the pod.
 	// Optional.
 	Tolerations []apiv1.Toleration `json:"tolerations,omitempty"`
+	// SecurityContenxt specifies the PodSecurityContext to apply.
+	// Optional.
+	SecurityContenxt *apiv1.PodSecurityContext `json:"securityContext,omitempty"`
 }
 
 // DriverSpec is specification of the driver.
@@ -478,8 +481,12 @@ type PrometheusSpec struct {
 	// Optional.
 	// If not specified, 8090 will be used as the default.
 	Port *int32 `json:"port"`
+	// ConfigFile is the path to the custom Prometheus configuration file provided in the Spark image.
+	// ConfigFile takes precedence over Configuration, which is shown below.
+	ConfigFile *string `json:"configFile,omitempty"`
 	// Configuration is the content of the Prometheus configuration needed by the Prometheus JMX exporter.
 	// Optional.
 	// If not specified, the content in spark-docker/conf/prometheus.yaml will be used.
-	Configuration *string `json:"configuration"`
+	// Configuration has no effect if ConfigFile is set.
+	Configuration *string `json:"configuration,omitempty"`
 }

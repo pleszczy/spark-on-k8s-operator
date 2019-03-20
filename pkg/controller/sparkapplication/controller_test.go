@@ -230,6 +230,7 @@ type executorMetrics struct {
 }
 
 func TestSyncSparkApplication_SubmissionFailed(t *testing.T) {
+	os.Setenv(sparkHomeEnvVar, "/spark")
 	os.Setenv(kubernetesServiceHostEnvVar, "localhost")
 	os.Setenv(kubernetesServicePortEnvVar, "443")
 
@@ -277,7 +278,7 @@ func TestSyncSparkApplication_SubmissionFailed(t *testing.T) {
 	assert.Equal(t, v1beta1.FailedSubmissionState, updatedApp.Status.AppState.State)
 	assert.Equal(t, int32(1), updatedApp.Status.SubmissionAttempts)
 	assert.Equal(t, float64(0), fetchCounterValue(ctrl.metrics.sparkAppSubmitCount, map[string]string{}))
-	assert.Equal(t, float64(1), fetchCounterValue(ctrl.metrics.sparkAppFailureCount, map[string]string{}))
+	assert.Equal(t, float64(1), fetchCounterValue(ctrl.metrics.sparkAppFailedSubmissionCount, map[string]string{}))
 
 	event := <-recorder.Events
 	assert.True(t, strings.Contains(event, "SparkApplicationAdded"))
@@ -489,6 +490,7 @@ func TestSyncSparkApplication_SubmissionSuccess(t *testing.T) {
 		app           *v1beta1.SparkApplication
 		expectedState v1beta1.ApplicationStateType
 	}
+	os.Setenv(sparkHomeEnvVar, "/spark")
 	os.Setenv(kubernetesServiceHostEnvVar, "localhost")
 	os.Setenv(kubernetesServicePortEnvVar, "443")
 
@@ -879,7 +881,7 @@ func TestSyncSparkApplication_ExecutingState(t *testing.T) {
 					Name:      "foo-driver",
 					Namespace: "test",
 					Labels: map[string]string{
-						config.SparkRoleLabel:    sparkDriverRole,
+						config.SparkRoleLabel:    config.SparkDriverRole,
 						config.SparkAppNameLabel: "foo-2",
 					},
 					ResourceVersion: "1",
@@ -893,7 +895,7 @@ func TestSyncSparkApplication_ExecutingState(t *testing.T) {
 					Name:      "exec-1",
 					Namespace: "test",
 					Labels: map[string]string{
-						config.SparkRoleLabel:    sparkExecutorRole,
+						config.SparkRoleLabel:    config.SparkExecutorRole,
 						config.SparkAppNameLabel: "foo-2",
 					},
 					ResourceVersion: "1",
@@ -914,13 +916,13 @@ func TestSyncSparkApplication_ExecutingState(t *testing.T) {
 		{
 			appName:           "foo-3",
 			oldAppStatus:      v1beta1.RunningState,
-			oldExecutorStatus: map[string]v1beta1.ExecutorState{"exec-1": v1beta1.ExecutorCompletedState},
+			oldExecutorStatus: map[string]v1beta1.ExecutorState{"exec-1": v1beta1.ExecutorRunningState},
 			driverPod: &apiv1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "foo-driver",
 					Namespace: "test",
 					Labels: map[string]string{
-						config.SparkRoleLabel:    sparkDriverRole,
+						config.SparkRoleLabel:    config.SparkDriverRole,
 						config.SparkAppNameLabel: "foo-3",
 					},
 					ResourceVersion: "1",
@@ -934,32 +936,43 @@ func TestSyncSparkApplication_ExecutingState(t *testing.T) {
 					Name:      "exec-1",
 					Namespace: "test",
 					Labels: map[string]string{
-						config.SparkRoleLabel:    sparkExecutorRole,
+						config.SparkRoleLabel:    config.SparkExecutorRole,
 						config.SparkAppNameLabel: "foo-3",
 					},
 					ResourceVersion: "1",
 				},
 				Status: apiv1.PodStatus{
-					Phase: apiv1.PodSucceeded,
+					Phase: apiv1.PodFailed,
 				},
 			},
 			expectedAppState:      v1beta1.FailingState,
-			expectedExecutorState: map[string]v1beta1.ExecutorState{"exec-1": v1beta1.ExecutorCompletedState},
+			expectedExecutorState: map[string]v1beta1.ExecutorState{"exec-1": v1beta1.ExecutorFailedState},
 			expectedAppMetrics: metrics{
 				failedMetricCount: 1,
 			},
+			expectedExecutorMetrics: executorMetrics{
+				failedMetricCount: 1,
+			},
+		},
+		{
+			appName:                 "foo-3",
+			oldAppStatus:            v1beta1.FailingState,
+			oldExecutorStatus:       map[string]v1beta1.ExecutorState{"exec-1": v1beta1.ExecutorFailedState},
+			expectedAppState:        v1beta1.FailedState,
+			expectedExecutorState:   map[string]v1beta1.ExecutorState{"exec-1": v1beta1.ExecutorFailedState},
+			expectedAppMetrics:      metrics{},
 			expectedExecutorMetrics: executorMetrics{},
 		},
 		{
 			appName:           "foo-3",
 			oldAppStatus:      v1beta1.RunningState,
-			oldExecutorStatus: map[string]v1beta1.ExecutorState{"exec-1": v1beta1.ExecutorCompletedState},
+			oldExecutorStatus: map[string]v1beta1.ExecutorState{"exec-1": v1beta1.ExecutorRunningState},
 			driverPod: &apiv1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "foo-driver",
 					Namespace: "test",
 					Labels: map[string]string{
-						config.SparkRoleLabel:    sparkDriverRole,
+						config.SparkRoleLabel:    config.SparkDriverRole,
 						config.SparkAppNameLabel: "foo-3",
 					},
 					ResourceVersion: "1",
@@ -973,7 +986,7 @@ func TestSyncSparkApplication_ExecutingState(t *testing.T) {
 					Name:      "exec-1",
 					Namespace: "test",
 					Labels: map[string]string{
-						config.SparkRoleLabel:    sparkExecutorRole,
+						config.SparkRoleLabel:    config.SparkExecutorRole,
 						config.SparkAppNameLabel: "foo-3",
 					},
 					ResourceVersion: "1",
@@ -987,6 +1000,17 @@ func TestSyncSparkApplication_ExecutingState(t *testing.T) {
 			expectedAppMetrics: metrics{
 				successMetricCount: 1,
 			},
+			expectedExecutorMetrics: executorMetrics{
+				successMetricCount: 1,
+			},
+		},
+		{
+			appName:                 "foo-3",
+			oldAppStatus:            v1beta1.SucceedingState,
+			oldExecutorStatus:       map[string]v1beta1.ExecutorState{"exec-1": v1beta1.ExecutorCompletedState},
+			expectedAppState:        v1beta1.CompletedState,
+			expectedExecutorState:   map[string]v1beta1.ExecutorState{"exec-1": v1beta1.ExecutorCompletedState},
+			expectedAppMetrics:      metrics{},
 			expectedExecutorMetrics: executorMetrics{},
 		},
 		{
@@ -998,7 +1022,7 @@ func TestSyncSparkApplication_ExecutingState(t *testing.T) {
 					Name:      "foo-driver",
 					Namespace: "test",
 					Labels: map[string]string{
-						config.SparkRoleLabel:    sparkDriverRole,
+						config.SparkRoleLabel:    config.SparkDriverRole,
 						config.SparkAppNameLabel: "foo-3",
 					},
 				},
@@ -1011,7 +1035,7 @@ func TestSyncSparkApplication_ExecutingState(t *testing.T) {
 					Name:      "exec-1",
 					Namespace: "test",
 					Labels: map[string]string{
-						config.SparkRoleLabel:    sparkExecutorRole,
+						config.SparkRoleLabel:    config.SparkExecutorRole,
 						config.SparkAppNameLabel: "foo-3",
 					},
 				},
@@ -1037,13 +1061,13 @@ func TestSyncSparkApplication_ExecutingState(t *testing.T) {
 			t.Fatal(err)
 		}
 		if test.driverPod != nil {
-			ctrl.kubeClient.CoreV1().Pods(app.GetNamespace()).Create(test.driverPod)
+			ctrl.kubeClient.CoreV1().Pods(app.Namespace).Create(test.driverPod)
 		}
 		if test.executorPod != nil {
-			ctrl.kubeClient.CoreV1().Pods(app.GetNamespace()).Create(test.executorPod)
+			ctrl.kubeClient.CoreV1().Pods(app.Namespace).Create(test.executorPod)
 		}
 
-		err = ctrl.syncSparkApplication(fmt.Sprintf("%s/%s", app.GetNamespace(), app.GetName()))
+		err = ctrl.syncSparkApplication(fmt.Sprintf("%s/%s", app.Namespace, app.Name))
 		assert.Nil(t, err)
 		// Verify application and executor states.
 		updatedApp, err := ctrl.crdClient.SparkoperatorV1beta1().SparkApplications(app.Namespace).Get(app.Name, metav1.GetOptions{})
